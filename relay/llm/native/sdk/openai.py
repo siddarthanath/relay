@@ -2,7 +2,7 @@
 
 # Standard Library
 from collections.abc import AsyncIterator
-from typing import List
+from typing import List, Dict
 
 # Third Party Library
 from openai import AsyncOpenAI
@@ -13,21 +13,13 @@ from relay.llm.schemas import LlmMessage, LlmRequest, LlmResponse
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
 
-class NativeOpenAILlm(BaseLlm):
+class SdkOpenAILlm(BaseLlm):
     """OpenAI LLM provider implementation."""
 
-    def __init__(self, api_key: str, model_name: str = "gpt-4o-mini") -> None:
-        """Initialise OpenAI provider.
-
-        Args:
-            api_key: OpenAI API key
-            model_name: OpenAI model name (default: gpt-4o-mini)
-
-        """
-        super().__init__(api_key, model_name)
+    def __init__(self, api_key: str, model_name: str | None = None) -> None:
+        super().__init__("openai", api_key, model_name)
 
     def _create_client(self, api_key: str):
-        """Create and return the provider-specific API client instance."""
         return AsyncOpenAI(api_key=api_key)
 
     async def _generate(self, request: LlmRequest) -> LlmResponse:
@@ -54,18 +46,18 @@ class NativeOpenAILlm(BaseLlm):
             if delta:
                 yield delta
  
-    def _convert_messages(self, messages: List[LlmMessage]) -> list[dict]:
-        # OpenAI accepts system role natively — no exclusion needed
+    def _convert_messages(self, messages: List[LlmMessage]) -> List[Dict]:
+        # OpenAI accepts system role natively - no exclusion needed
         return [
             {"role": msg.role.value, "content": msg.content}
             for msg in messages
         ]
   
-    def _build_kwargs(self, request: LlmRequest, stream: bool = False) -> dict:
+    def _build_kwargs(self, request: LlmRequest, stream: bool = False) -> Dict:
         kwargs = {
             **self._base_kwargs(request),
             "messages": self._build_messages(request),
-            "stream":   stream,
+            "stream": stream,
         }
         if request.top_p is not None:
             kwargs["top_p"] = request.top_p
@@ -75,9 +67,12 @@ class NativeOpenAILlm(BaseLlm):
             kwargs["presence_penalty"] = request.presence_penalty
         return kwargs
  
-    def _build_messages(self, request: LlmRequest) -> list[dict]:
-        """Prepend system_prompt as a system message if provided."""
+    def _build_messages(self, request: LlmRequest) -> List[Dict[str, str]]:
         messages = self._convert_messages(request.messages)
         if request.system_prompt:
             messages = [{"role": "system", "content": request.system_prompt}] + messages
         return messages
+
+    async def list_models(self) -> List[str]:
+        models = await self.client.models.list()
+        return sorted([m.id for m in models.data])

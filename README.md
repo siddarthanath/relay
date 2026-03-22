@@ -1,20 +1,12 @@
 # Relay 🔁
 
-> A minimal, typed Python unified interface for native LLM SDKs.
+> A minimal, typed Python unified interface for native LLMs.
 
 One request schema. One response schema. Swap providers without touching your application code.
 
 ![alt text](docs/relay_st.gif)
 
----
-
-## Why
-
-- LangChain is powerful but heavy.
-- LiteLLM is comprehensive but complex.
-
-Sometimes you just want a clean, typed abstraction over the different providers you actually use, directly from the provider API - with streaming, system prompts, and proper response metadata - and nothing else. Relay is that!
-
+Implementations are done via both REST (from scratch) and SDK (direct).
 ---
 
 ## Install
@@ -39,16 +31,31 @@ pip install relay
 
 ```python
 # Imports
-from relay.llm.factory import LLMProviderFactory
+from relay.llm.factory import LlmProviderFactory
 from relay.llm.schemas import LlmRequest, LlmMessage, Role
-# Arrange (factory instantiation)
-llm = LLMProviderFactory.create(model="anthropic", api_key="sk-ant-...", model_name="claude-haiku-4.5")
-user_request = LlmRequest(messages=[LlmMessage(role=Role.user,
-                                               content="Explain transformers in one paragraph.")],
-                          temperature=0.7,)
-# Act (execute response method)
-response = await llm.generate(user_request)
+# Arrange (creation)
+llm = LlmProviderFactory.create(
+    provider_type="google",
+    api_key="sk-ant-...",
+    model_name="gemini-2.5-flash",     
+    implementation="sdk",              
+)
+request = LlmRequest(
+    messages=[LlmMessage(role=Role.user, content="Explain transformers in one paragraph.")],
+    temperature=0.7,
+)
+# Act (generation)
+response = await llm.generate(request)
 print(response.content)
+```
+
+### Listing available models
+
+```python
+# Create the LLM without a model name, fetch the list, then set it.
+llm = LlmProviderFactory.create("google", api_key="sk-...")
+models = await llm.list_models()
+print(models)
 ```
 
 ### Streaming
@@ -70,8 +77,8 @@ request = LlmRequest(
 ### Switching providers
 
 ```python
-# Same request, different provider — no other changes needed
-llm = LLMProviderFactory.create(model="google", api_key="AIza...", model_name="gemini-2.5.flash")
+# Same request, different provider - no other changes needed
+llm = LlmProviderFactory.create("google", api_key="AIza...", model_name="gemini-2.5-flash")
 response = await llm.generate(request)
 ```
 
@@ -91,7 +98,7 @@ python -m relay.cli
 streamlit run relay/app.py
 ```
 
-Both prompt for API key and model at launch — nothing hardcoded, nothing stored.
+Both prompt for provider, implementation (sdk/rest), API key, and let you pick from a live model list - nothing hardcoded, nothing stored.
 
 ---
 
@@ -109,9 +116,11 @@ Both prompt for API key and model at launch — nothing hardcoded, nothing store
 
 If you use Relay in your work, please cite:
 
+```text
 @software{relay2026,
   author = {Siddartha Nath},
   title = {Relay: A Minimal Typed Python Unified Interface for LLMs},
   year = {2026},
   url = {https://github.com/siddarthanath/relay}
 }
+```

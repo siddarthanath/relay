@@ -11,7 +11,7 @@ import click
 # Private Library
 from relay.llm.factory import LlmProviderFactory
 from relay.llm.schemas import LlmMessage, LlmRequest, Role
-from relay.llm.constants import _DEFAULT_MODELS, _PROVIDERS, _MODELS
+from relay.llm.constants import _PROVIDERS, _IMPLEMENTATIONS, _MODELS
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
 
@@ -44,7 +44,7 @@ def _chat_header(model_name: str) -> str:
 def _render_box(sender: str, content: str, ts: str) -> str:
     prefix    = "  >  "
     indent    = "     "
-    inner     = WIDTH - 2          
+    inner     = WIDTH - 2
     text_w    = inner - len(prefix)
     header    = f" {ts}  {sender}"
 
@@ -80,18 +80,47 @@ def _prompt(label: str, choices: list[str] | None = None) -> str:
             continue
         return value.lower() if choices else value
 
+def _pick_model(llm) -> str:
+    """Fetch available models and prompt the user to pick one by number."""
+    _echo("  Fetching available models...")
+    try:
+        models: list[str] = asyncio.run(llm.list_models())
+    except Exception as e:
+        _echo(f"  Could not fetch model list: {e}")
+        _echo("  Enter model name manually:")
+        return input("  Model name > ").strip()
+
+    _echo()
+    for i, name in enumerate(models, 1):
+        _echo(f"    {i:>3}.  {name}")
+    _echo()
+
+    while True:
+        raw = click.prompt("  Pick a number").strip()
+        if raw.isdigit() and 1 <= int(raw) <= len(models):
+            return models[int(raw) - 1]
+        _echo(f"  Enter a number between 1 and {len(models)}.")
+
 def _setup():
     """Interactive setup sequence. Returns (llm, model_name)."""
 
     _header("Step 1 of 4  —  Interface Provider")
     _echo("  How do you want to connect to the model?")
     _echo()
-    _echo("    native     Direct SDK connection (no middleware)")
+    _echo("    native     Direct connection (no middleware)")
     _echo("    langchain  LangChain abstraction layer  [coming soon]")
     _echo()
     _prompt("Provider", choices=_PROVIDERS)  # only "native" supported
 
-    _header("Step 2 of 4  —  Model Family")
+    _header("Step 2 of 4  —  Implementation")
+    _echo("  Which backend should be used to call the API?")
+    _echo()
+    _echo("    sdk   Official provider SDK  (recommended)")
+    _echo("    rest  Raw HTTP via httpx")
+    _echo()
+    impl = _prompt("Implementation", choices=_IMPLEMENTATIONS)
+
+    _header("Step 3 of 4  —  Model Family")
     _echo("  Which model family do you want to use?")
     _echo()
     _echo("    anthropic  Claude (Sonnet, Opus, Haiku)")
@@ -100,14 +129,6 @@ def _setup():
     _echo()
     model = _prompt("Model", choices=_MODELS)
 
-    _header("Step 3 of 4  —  Model Version")
-    default_name = _DEFAULT_MODELS[model]
-    _echo(f"  Specify an exact model string, or press Enter for the default.")
-    _echo(f"  Default: {default_name}")
-    _echo()
-    raw = click.prompt("  Model name", default=default_name).strip()
-    model_name = raw if raw else default_name
-
     _header("Step 4 of 4  —  API Key")
     _echo(f"  Enter your {model.capitalize()} API key.")
     _echo()
@@ -115,10 +136,23 @@ def _setup():
 
     _echo()
     _echo(DIVIDER)
+
+    # Create a temporary LLM (no model name yet) purely to fetch the model list.
+    try:
+        temp_llm = LlmProviderFactory.create(model, api_key, implementation=impl)
+    except Exception as e:
+        _echo(f"\n  Failed to initialise client: {e}")
+        raise SystemExit(1)
+
+    _header("Step 5 of 5  —  Model Version")
+    model_name = _pick_model(temp_llm)
+
+    _echo()
+    _echo(DIVIDER)
     _echo("  Connecting...")
 
     try:
-        llm = LlmProviderFactory.create(model, api_key, model_name)
+        llm = LlmProviderFactory.create(model, api_key, model_name, implementation=impl)
     except Exception as e:
         _echo(f"\n  Failed to initialise client: {e}")
         raise SystemExit(1)

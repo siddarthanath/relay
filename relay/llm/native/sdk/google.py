@@ -2,7 +2,7 @@
 
 # Standard Library
 from collections.abc import AsyncIterator
-from typing import List
+from typing import List, Dict
 
 # Third Party Library
 from google import genai
@@ -14,13 +14,12 @@ from relay.llm.schemas import LlmMessage, LlmRequest, LlmResponse, Role
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
 
-class NativeGoogleLlm(BaseLlm):
+class SdkGoogleLlm(BaseLlm):
 
-    def __init__(self, api_key: str, model_name: str = "gemini-2.5-flash") -> None:
-        super().__init__(api_key, model_name)
+    def __init__(self, api_key: str, model_name: str | None = None) -> None:
+        super().__init__("google", api_key, model_name)
 
     def _create_client(self, api_key: str):
-        """Create and return the provider-specific API client instance."""
         return genai.Client(api_key=api_key)
 
     async def _generate(self, request: LlmRequest) -> LlmResponse:
@@ -34,9 +33,9 @@ class NativeGoogleLlm(BaseLlm):
             model=self.model_name,
             finish_reason=response.candidates[0].finish_reason.name if response.candidates else "unknown",
             usage={
-                "prompt_tokens":     response.usage_metadata.prompt_token_count if response.usage_metadata else 0,
+                "prompt_tokens": response.usage_metadata.prompt_token_count if response.usage_metadata else 0,
                 "completion_tokens": response.usage_metadata.candidates_token_count if response.usage_metadata else 0,
-                "total_tokens":      response.usage_metadata.total_token_count if response.usage_metadata else 0,
+                "total_tokens": response.usage_metadata.total_token_count if response.usage_metadata else 0,
             },
         )
  
@@ -50,13 +49,13 @@ class NativeGoogleLlm(BaseLlm):
             if chunk.text:
                 yield chunk.text
  
-    def _convert_messages(self, messages: List[LlmMessage]) -> list[types.Content]:
-        # System messages handled via system_instruction in config — exclude here
+    def _convert_messages(self, messages: List[LlmMessage]) -> List[Dict]:
+        # System messages handled via system_instruction in config - exclude here
         return [
-            types.Content(
-                role="model" if msg.role == Role.assistant else "user",
-                parts=[types.Part(text=msg.content)],
-            )
+            {
+                "role": "model" if msg.role == Role.assistant else "user",
+                "parts": [{"text": msg.content}],
+            }
             for msg in messages if msg.role != Role.system
         ]
   
@@ -69,3 +68,7 @@ class NativeGoogleLlm(BaseLlm):
             top_k=request.top_k,
             system_instruction=request.system_prompt,
         )
+
+    async def list_models(self) -> List[str]:
+        models = await self.client.aio.models.list()
+        return sorted([m.name.replace("models/", "") for m in models])

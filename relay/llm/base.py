@@ -19,7 +19,8 @@ TODO:
 class BaseLlm(ABC):
     """Abstract base class for LLM providers."""
 
-    def __init__(self, api_key: str, model_name: str) -> None:
+    def __init__(self, model_provider: str, api_key: str, model_name: str | None = None) -> None:
+        self.model_provider = model_provider
         self.model_name = model_name
         self._client = self._create_client(api_key)
 
@@ -53,10 +54,16 @@ class BaseLlm(ABC):
     def _base_kwargs(self, request: LlmRequest) -> dict:
         """Common generation parameters shared across all providers."""
         return {
-            "model":       self.model_name,
+            "model": self.model_name,
             "temperature": request.temperature,
             "max_tokens":  request.max_tokens,
         }
+    
+    def _validate_model(self, model_name: str) -> bool:
+        """Validate if the specified model is available for this provider."""
+        if model_name not in self.list_models():
+            raise ValueError(f"Model '{model_name}' not available for provider '{self.model_provider}'")
+        return model_name
 
     @abstractmethod
     def _create_client(self, api_key: str):
@@ -73,4 +80,8 @@ class BaseLlm(ABC):
 
     @abstractmethod
     def _convert_messages(self, messages: list[LlmMessage]) -> List[Dict]:
+        raise NotImplementedError("Subclasses must implement this method")
+
+    @abstractmethod
+    def list_models(self) -> List[str]:
         raise NotImplementedError("Subclasses must implement this method")

@@ -1,10 +1,6 @@
-"""LLM interface module for PolyNath API."""
-
-from relay.llm.anthropic import NativeAnthropicLlm
+from relay.llm.native import RestAnthropicLlm, SdkAnthropicLlm, RestGoogleLlm, SdkGoogleLlm, RestOpenAILlm, SdkOpenAILlm
 from relay.llm.base import BaseLlm
-from relay.llm.factory import LlmProviderFactory, LlmProviderType
-from relay.llm.google import NativeGoogleLlm
-from relay.llm.openai import NativeOpenAILlm
+from relay.llm.factory import LlmProviderFactory, LlmImplementationTypes, LlmModelProviderTypes
 from relay.llm.schemas import LlmMessage, LlmRequest, LlmResponse
 
 __all__ = [
@@ -12,9 +8,13 @@ __all__ = [
     "LlmRequest",
     "LlmResponse",
     "BaseLlm",
-    "NativeGoogleLlm",
-    "NativeOpenAILlm",
-    "NativeAnthropicLlm",
     "LlmProviderFactory",
-    "LlmProviderType",
+    "LlmImplementationTypes",
+    "LlmModelProviderTypes",
+    "RestAnthropicLlm",
+    "SdkAnthropicLlm",
+    "RestGoogleLlm",
+    "SdkGoogleLlm",
+    "RestOpenAILlm",
+    "SdkOpenAILlm",
 ]

@@ -2,9 +2,10 @@
 
 # Standard Library
 from collections.abc import AsyncIterator
-from typing import List
+from typing import List, Dict
 
 # Third Party Library
+import httpx
 from anthropic import AsyncAnthropic
 
 # Private Library
@@ -13,21 +14,13 @@ from relay.llm.schemas import LlmMessage, LlmRequest, LlmResponse, Role
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
 
-class NativeAnthropicLlm(BaseLlm):
+class SdkAnthropicLlm(BaseLlm):
     """Anthropic Claude LLM provider implementation."""
 
-    def __init__(self, api_key: str, model_name: str = "claude-haiku-4.5") -> None:
-        """Initialize Anthropic provider.
-
-        Args:
-            api_key: Anthropic API key
-            model_name: Claude model name (default: claude-haiku-4.5)
-
-        """
-        super().__init__(api_key, model_name)
+    def __init__(self, api_key: str, model_name: str | None = None) -> None:
+        super().__init__("anthropic", api_key, model_name)
 
     def _create_client(self, api_key: str):
-        """Create and return the provider-specific API client instance."""
         return AsyncAnthropic(api_key=api_key)
 
     async def _generate(self, request: LlmRequest) -> LlmResponse:
@@ -37,9 +30,9 @@ class NativeAnthropicLlm(BaseLlm):
             model=response.model,
             finish_reason=response.stop_reason,
             usage={
-                "prompt_tokens":     response.usage.input_tokens,
+                "prompt_tokens": response.usage.input_tokens,
                 "completion_tokens": response.usage.output_tokens,
-                "total_tokens":      response.usage.input_tokens + response.usage.output_tokens,
+                "total_tokens": response.usage.input_tokens + response.usage.output_tokens,
             },
         )
  
@@ -48,19 +41,29 @@ class NativeAnthropicLlm(BaseLlm):
             async for text in stream.text_stream:
                 yield text
  
-    def _convert_messages(self, messages: List[LlmMessage]) -> list[dict]:
-        # System messages handled via top-level system param — exclude here
+    def _convert_messages(self, messages: List[LlmMessage]) -> List[Dict[str, str]]:
+        # System messages handled via top-level system param - exclude here
         return [
             {"role": msg.role.value, "content": msg.content}
             for msg in messages if msg.role != Role.system
         ]
   
-    def _build_kwargs(self, request: LlmRequest) -> dict:
+    def _build_kwargs(self, request: LlmRequest) -> Dict:
         kwargs = {
             **self._base_kwargs(request),
             "messages": self._convert_messages(request.messages),
-            "max_tokens": request.max_tokens or 4096,   # Anthropic requires max_tokens
+            "max_tokens": request.max_tokens or 0,
         }
         if request.system_prompt:
             kwargs["system"] = request.system_prompt
         return kwargs
+
+    async def list_models(self) -> List[str]:
+        # Same as rest implementation since Anthropic doesn't have an official SDK method for listing models as of now
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                "https://api.anthropic.com/v1/models",
+                headers={"x-api-key": self.client.api_key, "anthropic-version": "2023-06-01"},
+            )
+            response.raise_for_status()
+            return [m["id"] for m in response.json()["data"]]
