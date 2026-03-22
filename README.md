@@ -6,7 +6,8 @@ One request schema. One response schema. Swap providers without touching your ap
 
 ![alt text](docs/relay_st.gif)
 
-Implementations are done via both REST (from scratch) and SDK (direct).
+Implementations are done via both REST (from scratch) and SDK (direct) for learning purposes.
+
 ---
 
 ## Install
