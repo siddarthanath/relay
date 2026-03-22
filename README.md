@@ -4,7 +4,7 @@
 
 One request schema. One response schema. Swap providers without touching your application code.
 
-![alt text](docs/relay.gif)
+![alt text](docs/relay_st.gif)
 
 ---
 
