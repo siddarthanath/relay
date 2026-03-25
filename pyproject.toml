@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "relay"
 version = "0.1.0"
-description = "A minimal, typed Python unified interface for native LLM SDKs."
+description = "A minimal, typed Python unified interface for native LLMs."
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
