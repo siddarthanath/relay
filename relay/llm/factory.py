@@ -21,7 +21,7 @@ LlmImplementationTypes = Literal["sdk", "rest"]
 class LlmProviderFactory:
     """Factory for creating LLM provider instances."""
 
-    _providers: Dict[Tuple[str, str], type[BaseLlm]] = {
+    _PROVIDER_REGISTRY: Dict[Tuple[str, str], type[BaseLlm]] = {
         ("sdk", "anthropic"): SdkAnthropicLlm,
         ("sdk", "google"): SdkGoogleLlm,
         ("sdk", "openai"): SdkOpenAILlm,
@@ -54,12 +54,12 @@ class LlmProviderFactory:
 
         """
         key = (implementation, provider_type)
-        if key not in cls._providers:
+        if key not in cls._PROVIDER_REGISTRY:
             raise ValueError(
                 f"Unsupported combination: provider='{provider_type}', implementation='{implementation}'"
             )
 
-        provider_class = cls._providers[key]
+        provider_class = cls._PROVIDER_REGISTRY[key]
         return provider_class(api_key=api_key, model_name=model_name)
 
     @classmethod
@@ -70,4 +70,4 @@ class LlmProviderFactory:
         implementation: LlmImplementationTypes = "sdk",
     ) -> None:
         """Register a custom LLM provider."""
-        cls._providers[(implementation, provider_type)] = provider_class
+        cls._PROVIDER_REGISTRY[(implementation, provider_type)] = provider_class
