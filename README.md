@@ -103,13 +103,15 @@ Both prompt for provider, implementation (sdk/rest), API key, and let you pick f
 
 ---
 
-## Supported providers
+## Supported methods
 
-| Provider  | Non-streaming | Streaming | System prompt | Thinking mode |
-|-----------|:---:|:---:|:---:|:---:|
-| Anthropic | ✓ | ✓ | ✓ | soon |
-| OpenAI    | ✓ | ✓ | ✓ | soon |
-| Google    | ✓ | ✓ | ✓ | soon |
+| Version | Non-streaming | Streaming | System prompt | Thinking Mode | Tool/Function Calling | Image Generation | Voice Generation |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| v1 | ✓ | ✓ | ✓ | | | | |
+| v2 | | | | soon | | | |
+| v3 | | | | | soon | | |
+| v4 | | | | | | soon | |
+| v5 | | | | | | | soon |
 
 ---
 
@@ -120,7 +122,7 @@ If you use Relay in your work, please cite:
 ```text
 @software{relay2026,
   author = {Siddartha Nath},
-  title = {Relay: A Minimal Typed Python Unified Interface for LLMs},
+  title = {Relay: A Unified Python Interface for LLMs},
   year = {2026},
   url = {https://github.com/siddarthanath/relay}
 }
