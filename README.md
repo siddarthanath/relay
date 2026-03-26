@@ -122,7 +122,7 @@ If you use Relay in your work, please cite:
 ```text
 @software{relay2026,
   author = {Siddartha Nath},
-  title = {Relay: A Unified Python Interface for LLMs},
+  title = {Relay: A Minimal Unified Python Interface for LLMs},
   year = {2026},
   url = {https://github.com/siddarthanath/relay}
 }
