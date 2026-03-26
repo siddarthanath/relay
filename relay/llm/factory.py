@@ -13,6 +13,12 @@ from relay.llm.native.rest.google import RestGoogleLlm
 from relay.llm.native.rest.openai import RestOpenAILlm
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
+""" 
+NOTE:
+
+If you are going to utilise this factory with your own API keys, it is better to create a .env with the LLM API keys
+and then preload them here by converting this from a factory pattern to a registry pattern.
+"""
 
 LlmModelProviderTypes = Literal["google", "openai", "anthropic"]
 LlmImplementationTypes = Literal["sdk", "rest"]

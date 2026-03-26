@@ -30,22 +30,42 @@ pip install relay
 
 ### Basic generation
 
+Use the **factory** when you supply the API key yourself at call time:
+
 ```python
 # Imports
-from relay.llm.factory import LlmProviderFactory
+from relay.llm import LlmProviderFactory
 from relay.llm.schemas import LlmRequest, LlmMessage, Role
-# Arrange (creation)
+# Arrange (LLM creation)
 llm = LlmProviderFactory.create(
     provider_type="google",
-    api_key="sk-ant-...",
-    model_name="gemini-2.5-flash",     
-    implementation="sdk",              
+    api_key="AIza...",
+    model_name="gemini-2.5-flash",
+    implementation="sdk",
 )
+# Act (LLM generation)
 request = LlmRequest(
     messages=[LlmMessage(role=Role.user, content="Explain transformers in one paragraph.")],
     temperature=0.7,
 )
-# Act (generation)
+response = await llm.generate(request)
+print(response.content)
+```
+
+Use the **registry** when keys live in a `.env` file or environment variables — configure once, fetch anywhere:
+
+```python
+# Imports
+from relay.llm import LlmProviderRegistry
+from relay.llm.schemas import LlmRequest, LlmMessage, Role
+# Arrange (LLM creation)
+registry = LlmProviderRegistry(env_file=".env")
+llm = registry.get("google") # Default implementation is 'sdk'                        
+# Act (LLM generation)
+request = LlmRequest(
+    messages=[LlmMessage(role=Role.user, content="Explain transformers in one paragraph.")],
+    temperature=0.7,
+)
 response = await llm.generate(request)
 print(response.content)
 ```
