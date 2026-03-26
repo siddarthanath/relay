@@ -1,12 +1,12 @@
 # Relay 🔁
 
-> A minimal, typed Python unified interface for native LLMs.
 
 One request schema. One response schema. Swap providers without touching your application code.
 
 ![alt text](docs/relay_st.gif)
 
-Implementations are done via both REST (from scratch) and SDK (direct) for learning purposes.
+Implementations are done via both REST (from scratch) and SDK (direct), allowing users to see that all
+businesses do is write API requests and wrap them in a nice library structure.
 
 ---
 
