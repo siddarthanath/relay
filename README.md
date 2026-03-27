@@ -198,23 +198,15 @@ Both prompt for provider, implementation (sdk/rest), and API key at launch — n
 
 ---
 
-## Supported providers
-
-| Provider | SDK | REST | Non-streaming | Streaming | System prompt |
-|:---:|:---:|:---:|:---:|:---:|:---:|
-| OpenAI | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Anthropic | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Google | ✓ | ✓ | ✓ | ✓ | ✓ |
-
 ## Roadmap
 
-| Version | Feature |
-|:---:|:---|
-| v1 | Non-streaming, streaming, system prompts — SDK + REST |
-| v2 | Thinking mode (o1, Claude extended thinking) |
-| v3 | Tool and function calling |
-| v4 | Image generation |
-| v5 | Voice generation |
+| Version | Feature | Status |
+|:---:|:---| :---|
+| v1 | Non-streaming, streaming, system prompts — SDK + REST | ✓
+| v2 | Thinking mode (o1, Claude extended thinking) | ✗
+| v3 | Tool and function calling | ✗
+| v4 | Image generation | ✗
+| v5 | Voice generation | ✗
 
 ---
 
