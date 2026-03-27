@@ -116,12 +116,12 @@ class TestRestGoogleBuildBody:
         body = llm._build_body(_request(top_k=40))
         assert body["generationConfig"]["topK"] == 40
 
-    def test_system_instruction_included(self):
+    def test_system_prompt_included_when_set(self):
         llm = _llm()
         body = llm._build_body(_request(system_prompt="Be helpful."))
         assert body["systemInstruction"] == {"parts": [{"text": "Be helpful."}]}
 
-    def test_system_instruction_absent_when_not_set(self):
+    def test_system_prompt_absent_when_not_set(self):
         llm = _llm()
         body = llm._build_body(_request())
         assert "systemInstruction" not in body

@@ -105,12 +105,12 @@ class TestSdkGoogleBuildConfig:
         config = llm._build_config(_request(top_k=40))
         assert config.top_k == 40
 
-    def test_system_instruction_set(self):
+    def test_system_prompt_included_when_set(self):
         llm = _llm()
         config = llm._build_config(_request(system_prompt="Be concise."))
         assert config.system_instruction == "Be concise."
 
-    def test_system_instruction_none_when_not_set(self):
+    def test_system_prompt_absent_when_not_set(self):
         llm = _llm()
         config = llm._build_config(_request())
         assert config.system_instruction is None

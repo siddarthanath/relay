@@ -97,13 +97,13 @@ class TestSdkOpenAIBuildMessages:
         msgs = llm._build_messages(_request())
         assert msgs[0]["role"] == "user"
 
-    def test_system_prompt_prepended(self):
+    def test_system_prompt_included_when_set(self):
         llm = _llm()
         msgs = llm._build_messages(_request(system_prompt="You are helpful."))
         assert msgs[0] == {"role": "system", "content": "You are helpful."}
         assert msgs[1]["role"] == "user"
 
-    def test_system_prompt_absent_when_none(self):
+    def test_system_prompt_absent_when_not_set(self):
         llm = _llm()
         msgs = llm._build_messages(_request(system_prompt=None))
         assert not any(m["role"] == "system" for m in msgs)
