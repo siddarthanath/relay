@@ -93,7 +93,7 @@ class RestGoogleLlm(BaseLlm):
         return body
 
     async def list_models(self) -> List[str]:
-        response = await self.client.get("/", params={"key": self.api_key})
+        response = await self.client.get("/")
         response.raise_for_status()
         models = response.json().get("models", [])
         return sorted([m["name"].replace("models/", "") for m in models])

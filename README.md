@@ -1,12 +1,12 @@
 # Relay 🔁
 
+> A minimal unified Python interface for LLMs.
 
 One request schema. One response schema. Swap providers without touching your application code.
 
-![alt text](docs/relay_st.gif)
+Implementations are available via both **SDK** (direct) and **REST** (from scratch via httpx) — so you can see exactly what provider libraries are doing under the hood.
 
-Implementations are done via both REST (from scratch) and SDK (direct), allowing users to see that all
-businesses do is write API requests and wrap them in a nice library structure.
+![alt text](docs/relay_st.gif)
 
 ---
 
@@ -26,9 +26,74 @@ pip install relay
 
 ---
 
+## Architecture
+
+```mermaid
+flowchart TD
+    User(["User / App"])
+
+    subgraph Interfaces
+        CLI["CLI"]
+        ST["Streamlit App"]
+    end
+
+    subgraph Schemas
+        REQ["LlmRequest"]
+        RESP["LlmResponse"]
+    end
+
+    Factory["LlmProviderFactory"]
+
+    subgraph Base["BaseLlm"]
+        GEN["generate()"]
+        LIST["list_models()"]
+    end
+
+    subgraph SDK["SDK Implementation"]
+        SDK_A["SdkAnthropicLlm"]
+        SDK_O["SdkOpenAILlm"]
+        SDK_G["SdkGoogleLlm"]
+    end
+
+    subgraph REST["REST Implementation"]
+        REST_A["RestAnthropicLlm"]
+        REST_O["RestOpenAILlm"]
+        REST_G["RestGoogleLlm"]
+    end
+
+    LLMs["External LLM APIs"]
+
+    User --> CLI
+    User --> ST
+    CLI --> Factory
+    ST --> Factory
+    User --> Factory
+    Factory --> Base
+    Base --> SDK
+    Base --> REST
+    SDK --> SDK_A
+    SDK --> SDK_O
+    SDK --> SDK_G
+    REST --> REST_A
+    REST --> REST_O
+    REST --> REST_G
+    SDK_A --> LLMs
+    SDK_O --> LLMs
+    SDK_G --> LLMs
+    REST_A --> LLMs
+    REST_O --> LLMs
+    REST_G --> LLMs
+    LLMs --> Base
+    Base --> User
+    REQ -.-> GEN
+    GEN -.-> RESP
+```
+
+---
+
 ## Usage
 
-### Basic generation
+### 1. Basic generation
 
 Use the **factory** when you supply the API key yourself at call time:
 
@@ -37,22 +102,20 @@ Use the **factory** when you supply the API key yourself at call time:
 from relay.llm import LlmProviderFactory
 from relay.llm.schemas import LlmRequest, LlmMessage, Role
 # Arrange (LLM creation)
-llm = LlmProviderFactory.create(
-    provider_type="google",
-    api_key="AIza...",
-    model_name="gemini-2.5-flash",
-    implementation="sdk",
-)
+llm = LlmProviderFactory.create(provider_type="google",
+                                api_key="AIza...",
+                                model_name="gemini-2.5-flash",
+                                implementation="sdk")
+request = LlmRequest(messages=[LlmMessage(role=Role.user, 
+                                          content="Explain transformers in one paragraph.")
+                              ],
+                     temperature=0.7)
 # Act (LLM generation)
-request = LlmRequest(
-    messages=[LlmMessage(role=Role.user, content="Explain transformers in one paragraph.")],
-    temperature=0.7,
-)
 response = await llm.generate(request)
 print(response.content)
 ```
 
-Use the **registry** when keys live in a `.env` file or environment variables — configure once, fetch anywhere:
+Use the **registry** when keys live in a `.env` file — configure once, fetch anywhere:
 
 ```python
 # Imports
@@ -60,47 +123,59 @@ from relay.llm import LlmProviderRegistry
 from relay.llm.schemas import LlmRequest, LlmMessage, Role
 # Arrange (LLM creation)
 registry = LlmProviderRegistry(env_file=".env")
-llm = registry.get("google") # Default implementation is 'sdk'                        
+llm = registry.get("google")   # Default implementation is sdk
+request  = LlmRequest(messages=[LlmMessage(role=Role.user, 
+                                           content="Explain transformers in one paragraph.")
+                               ],
+                      temperature=0.7)
 # Act (LLM generation)
-request = LlmRequest(
-    messages=[LlmMessage(role=Role.user, content="Explain transformers in one paragraph.")],
-    temperature=0.7,
-)
 response = await llm.generate(request)
 print(response.content)
 ```
 
-### Listing available models
+### 2. Listing available models
 
 ```python
-# Create the LLM without a model name, fetch the list, then set it.
-llm = LlmProviderFactory.create("google", api_key="sk-...")
+llm = LlmProviderFactory.create(provider_type="google", 
+                                api_key="AIza...")
 models = await llm.list_models()
 print(models)
 ```
 
-### Streaming
+### 3. Streaming
 
 ```python
 async for chunk in await llm.generate(request, stream=True):
     print(chunk, end="", flush=True)
 ```
 
-### System prompts
+### 4. System prompts
 
 ```python
-request = LlmRequest(
-    messages=[LlmMessage(role=Role.user, content="Summarise this.")],
-    system_prompt="You are a concise technical writer.",
-)
+request = LlmRequest(messages=[LlmMessage(role=Role.user, 
+                                          content="Summarise this.")
+                              ],
+                     system_prompt="You are a concise technical writer.")
 ```
 
-### Switching providers
+### 5. Switching providers
 
 ```python
-# Same request, different provider - no other changes needed
-llm = LlmProviderFactory.create("google", api_key="AIza...", model_name="gemini-2.5-flash")
+# Same request, different provider — no other changes needed
+llm = LlmProviderFactory.create(provider_type="anthropic", 
+                                api_key="sk-ant-...", 
+                                model_name="claude-sonnet-4-20250514")
 response = await llm.generate(request)
+```
+
+### 6. Switching implementations
+
+```python
+# Same provider, REST instead of SDK — useful for understanding what's happening on the wire
+llm = LlmProviderFactory.create(provider_type="openai", 
+                                api_key="sk-..."
+                                model_name="gpt-4o-mini",
+                                implementation="rest")
 ```
 
 ---
@@ -119,19 +194,27 @@ python -m relay.cli
 streamlit run relay/app.py
 ```
 
-Both prompt for provider, implementation (sdk/rest), API key, and let you pick from a live model list - nothing hardcoded, nothing stored.
+Both prompt for provider, implementation (sdk/rest), and API key at launch — nothing hardcoded, nothing stored. The Streamlit app pulls a live model list from the provider so you always see what's available.
 
 ---
 
-## Supported methods
+## Supported providers
 
-| Version | Non-streaming | Streaming | System prompt | Thinking Mode | Tool/Function Calling | Image Generation | Voice Generation |
-|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| v1 | ✓ | ✓ | ✓ | | | | |
-| v2 | | | | soon | | | |
-| v3 | | | | | soon | | |
-| v4 | | | | | | soon | |
-| v5 | | | | | | | soon |
+| Provider | SDK | REST | Non-streaming | Streaming | System prompt |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| OpenAI | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Anthropic | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Google | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+## Roadmap
+
+| Version | Feature |
+|:---:|:---|
+| v1 | Non-streaming, streaming, system prompts — SDK + REST |
+| v2 | Thinking mode (o1, Claude extended thinking) |
+| v3 | Tool and function calling |
+| v4 | Image generation |
+| v5 | Voice generation |
 
 ---
 

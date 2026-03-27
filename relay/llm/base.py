@@ -59,9 +59,9 @@ class BaseLlm(ABC):
             "max_tokens":  request.max_tokens,
         }
     
-    def _validate_model(self, model_name: str) -> bool:
+    async def _validate_model(self, model_name: str) -> str:
         """Validate if the specified model is available for this provider."""
-        if model_name not in self.list_models():
+        if model_name not in await self.list_models():
             raise ValueError(f"Model '{model_name}' not available for provider '{self.model_provider}'")
         return model_name
 
