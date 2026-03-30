@@ -8,15 +8,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 # Private Library
-from relay.llm.native.sdk.anthropic import SdkAnthropicLlm
+from relay.llm.native.sdk.anthropic import NativeSdkAnthropicLlm
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
 
 # Helpers
 
-def _llm() -> SdkAnthropicLlm:
-    with patch.object(SdkAnthropicLlm, "_create_client", return_value=MagicMock()):
-        return SdkAnthropicLlm(api_key="fake-key", model_name="claude-opus-4-6")
+def _llm() -> NativeSdkAnthropicLlm:
+    with patch.object(NativeSdkAnthropicLlm, "_create_client", return_value=MagicMock()):
+        return NativeSdkAnthropicLlm(api_key="fake-key", model_name="claude-opus-4-6")
 
 
 class TestValidateModel:

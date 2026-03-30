@@ -13,7 +13,7 @@ from relay.llm.schemas import LlmMessage, LlmRequest, LlmResponse
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
 
-class SdkOpenAILlm(BaseLlm):
+class NativeSdkOpenAILlm(BaseLlm):
     """OpenAI LLM provider implementation."""
 
     def __init__(self, api_key: str, model_name: str | None = None) -> None:

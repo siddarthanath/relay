@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 # Private Library
-from relay.llm.native.rest.openai import RestOpenAILlm
+from relay.llm.native.rest.openai import NativeRestOpenAILlm
 from relay.llm.schemas import LlmMessage, LlmRequest, LlmResponse, Role
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
@@ -25,9 +25,9 @@ async def _collect(gen):
     return [item async for item in gen]
 
 
-def _llm(model_name="gpt-4o") -> RestOpenAILlm:
-    with patch.object(RestOpenAILlm, "_create_client", return_value=MagicMock()):
-        return RestOpenAILlm(api_key="fake-key", model_name=model_name)
+def _llm(model_name="gpt-4o") -> NativeRestOpenAILlm:
+    with patch.object(NativeRestOpenAILlm, "_create_client", return_value=MagicMock()):
+        return NativeRestOpenAILlm(api_key="fake-key", model_name=model_name)
 
 
 def _request(**kwargs) -> LlmRequest:
@@ -53,12 +53,12 @@ def _api_response(content="Hi there", model="gpt-4o", finish_reason="stop",
     }
 
 
-class TestRestOpenAILlmInit:
+class TestNativeRestOpenAILlmInit:
     def test_model_provider_set(self):
         assert _llm().model_provider == "openai"
 
     def test_base_url(self):
-        assert RestOpenAILlm.OPENAI_BASE_URL == "https://api.openai.com/v1"
+        assert NativeRestOpenAILlm.OPENAI_BASE_URL == "https://api.openai.com/v1"
 
 
 class TestRestOpenAIConvertMessages:

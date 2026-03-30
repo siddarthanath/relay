@@ -9,12 +9,12 @@ import pytest
 # Private Library
 from relay.llm.factory import LlmProviderFactory
 from relay.llm.base import BaseLlm
-from relay.llm.native.sdk.anthropic import SdkAnthropicLlm
-from relay.llm.native.sdk.google import SdkGoogleLlm
-from relay.llm.native.sdk.openai import SdkOpenAILlm
-from relay.llm.native.rest.anthropic import RestAnthropicLlm
-from relay.llm.native.rest.google import RestGoogleLlm
-from relay.llm.native.rest.openai import RestOpenAILlm
+from relay.llm.native.sdk.anthropic import NativeSdkAnthropicLlm
+from relay.llm.native.sdk.google import NativeSdkGoogleLlm
+from relay.llm.native.sdk.openai import NativeSdkOpenAILlm
+from relay.llm.native.rest.anthropic import NativeRestAnthropicLlm
+from relay.llm.native.rest.google import NativeRestGoogleLlm
+from relay.llm.native.rest.openai import NativeRestOpenAILlm
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
 
@@ -26,47 +26,47 @@ def _patch(cls):
 
 class TestLlmProviderFactory:
     def test_create_sdk_anthropic(self):
-        with _patch(SdkAnthropicLlm):
+        with _patch(NativeSdkAnthropicLlm):
             llm = LlmProviderFactory.create("anthropic", "fake-key", implementation="sdk")
-        assert isinstance(llm, SdkAnthropicLlm)
+        assert isinstance(llm, NativeSdkAnthropicLlm)
 
     def test_create_sdk_google(self):
-        with _patch(SdkGoogleLlm):
+        with _patch(NativeSdkGoogleLlm):
             llm = LlmProviderFactory.create("google", "fake-key", implementation="sdk")
-        assert isinstance(llm, SdkGoogleLlm)
+        assert isinstance(llm, NativeSdkGoogleLlm)
 
     def test_create_sdk_openai(self):
-        with _patch(SdkOpenAILlm):
+        with _patch(NativeSdkOpenAILlm):
             llm = LlmProviderFactory.create("openai", "fake-key", implementation="sdk")
-        assert isinstance(llm, SdkOpenAILlm)
+        assert isinstance(llm, NativeSdkOpenAILlm)
 
     def test_create_rest_anthropic(self):
-        with _patch(RestAnthropicLlm):
+        with _patch(NativeRestAnthropicLlm):
             llm = LlmProviderFactory.create("anthropic", "fake-key", implementation="rest")
-        assert isinstance(llm, RestAnthropicLlm)
+        assert isinstance(llm, NativeRestAnthropicLlm)
 
     def test_create_rest_google(self):
-        with _patch(RestGoogleLlm):
+        with _patch(NativeRestGoogleLlm):
             llm = LlmProviderFactory.create("google", "fake-key", implementation="rest")
-        assert isinstance(llm, RestGoogleLlm)
+        assert isinstance(llm, NativeRestGoogleLlm)
 
     def test_create_rest_openai(self):
-        with _patch(RestOpenAILlm):
+        with _patch(NativeRestOpenAILlm):
             llm = LlmProviderFactory.create("openai", "fake-key", implementation="rest")
-        assert isinstance(llm, RestOpenAILlm)
+        assert isinstance(llm, NativeRestOpenAILlm)
 
     def test_default_implementation_is_sdk(self):
-        with _patch(SdkAnthropicLlm):
+        with _patch(NativeSdkAnthropicLlm):
             llm = LlmProviderFactory.create("anthropic", "fake-key")
-        assert isinstance(llm, SdkAnthropicLlm)
+        assert isinstance(llm, NativeSdkAnthropicLlm)
 
     def test_model_name_passed_through(self):
-        with _patch(SdkOpenAILlm):
+        with _patch(NativeSdkOpenAILlm):
             llm = LlmProviderFactory.create("openai", "fake-key", model_name="gpt-4o")
         assert llm.model_name == "gpt-4o"
 
     def test_model_name_none_by_default(self):
-        with _patch(SdkAnthropicLlm):
+        with _patch(NativeSdkAnthropicLlm):
             llm = LlmProviderFactory.create("anthropic", "fake-key")
         assert llm.model_name is None
 

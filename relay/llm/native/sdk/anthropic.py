@@ -14,7 +14,7 @@ from relay.llm.schemas import LlmMessage, LlmRequest, LlmResponse, Role
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
 
-class SdkAnthropicLlm(BaseLlm):
+class NativeSdkAnthropicLlm(BaseLlm):
     """Anthropic Claude LLM provider implementation."""
 
     def __init__(self, api_key: str, model_name: str | None = None) -> None:

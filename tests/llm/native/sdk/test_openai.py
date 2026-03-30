@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 # Private Library
-from relay.llm.native.sdk.openai import SdkOpenAILlm
+from relay.llm.native.sdk.openai import NativeSdkOpenAILlm
 from relay.llm.schemas import LlmMessage, LlmRequest, LlmResponse, Role
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
@@ -24,9 +24,9 @@ async def _collect(gen):
     return [item async for item in gen]
 
 
-def _llm(model_name="gpt-4o") -> SdkOpenAILlm:
-    with patch.object(SdkOpenAILlm, "_create_client", return_value=MagicMock()):
-        return SdkOpenAILlm(api_key="fake-key", model_name=model_name)
+def _llm(model_name="gpt-4o") -> NativeSdkOpenAILlm:
+    with patch.object(NativeSdkOpenAILlm, "_create_client", return_value=MagicMock()):
+        return NativeSdkOpenAILlm(api_key="fake-key", model_name=model_name)
 
 
 def _request(**kwargs) -> LlmRequest:
@@ -46,7 +46,7 @@ def _mock_generate_response(content="Hi there", model="gpt-4o", finish_reason="s
     return resp
 
 
-class TestSdkOpenAILlmInit:
+class TestNativeSdkOpenAILlmInit:
     def test_model_provider_set(self):
         assert _llm().model_provider == "openai"
 

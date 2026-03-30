@@ -9,24 +9,24 @@ import pytest
 
 # Private Library
 from relay.llm.registry import LlmProviderRegistry
-from relay.llm.native.sdk.anthropic import SdkAnthropicLlm
-from relay.llm.native.sdk.google import SdkGoogleLlm
-from relay.llm.native.sdk.openai import SdkOpenAILlm
-from relay.llm.native.rest.anthropic import RestAnthropicLlm
-from relay.llm.native.rest.google import RestGoogleLlm
-from relay.llm.native.rest.openai import RestOpenAILlm
+from relay.llm.native.sdk.anthropic import NativeSdkAnthropicLlm
+from relay.llm.native.sdk.google import NativeSdkGoogleLlm
+from relay.llm.native.sdk.openai import NativeSdkOpenAILlm
+from relay.llm.native.rest.anthropic import NativeRestAnthropicLlm
+from relay.llm.native.rest.google import NativeRestGoogleLlm
+from relay.llm.native.rest.openai import NativeRestOpenAILlm
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
 
 # Helpers
 
 _ALL_CLASSES = [
-    SdkAnthropicLlm,
-    SdkGoogleLlm,
-    SdkOpenAILlm,
-    RestAnthropicLlm,
-    RestGoogleLlm,
-    RestOpenAILlm,
+    NativeSdkAnthropicLlm,
+    NativeSdkGoogleLlm,
+    NativeSdkOpenAILlm,
+    NativeRestAnthropicLlm,
+    NativeRestGoogleLlm,
+    NativeRestOpenAILlm,
 ]
 
 
@@ -74,22 +74,22 @@ class TestLlmProviderRegistry:
     def test_get_returns_sdk_by_default(self, monkeypatch):
         registry = _registry_with_all_keys(monkeypatch)
         llm = registry.get("anthropic")
-        assert isinstance(llm, SdkAnthropicLlm)
+        assert isinstance(llm, NativeSdkAnthropicLlm)
 
     def test_get_rest_implementation(self, monkeypatch):
         registry = _registry_with_all_keys(monkeypatch)
         llm = registry.get("anthropic", implementation="rest")
-        assert isinstance(llm, RestAnthropicLlm)
+        assert isinstance(llm, NativeRestAnthropicLlm)
 
     def test_get_google_sdk(self, monkeypatch):
         registry = _registry_with_all_keys(monkeypatch)
         llm = registry.get("google")
-        assert isinstance(llm, SdkGoogleLlm)
+        assert isinstance(llm, NativeSdkGoogleLlm)
 
     def test_get_openai_rest(self, monkeypatch):
         registry = _registry_with_all_keys(monkeypatch)
         llm = registry.get("openai", implementation="rest")
-        assert isinstance(llm, RestOpenAILlm)
+        assert isinstance(llm, NativeRestOpenAILlm)
 
     def test_get_missing_provider_raises_key_error(self, monkeypatch):
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-fake")

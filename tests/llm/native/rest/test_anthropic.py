@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 # Private Library
-from relay.llm.native.rest.anthropic import RestAnthropicLlm
+from relay.llm.native.rest.anthropic import NativeRestAnthropicLlm
 from relay.llm.schemas import LlmMessage, LlmRequest, LlmResponse, Role
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
@@ -25,9 +25,9 @@ async def _collect(gen):
     return [item async for item in gen]
 
 
-def _llm(model_name="claude-opus-4-6") -> RestAnthropicLlm:
-    with patch.object(RestAnthropicLlm, "_create_client", return_value=MagicMock()):
-        return RestAnthropicLlm(api_key="fake-key", model_name=model_name)
+def _llm(model_name="claude-opus-4-6") -> NativeRestAnthropicLlm:
+    with patch.object(NativeRestAnthropicLlm, "_create_client", return_value=MagicMock()):
+        return NativeRestAnthropicLlm(api_key="fake-key", model_name=model_name)
 
 
 def _request(**kwargs) -> LlmRequest:
@@ -45,15 +45,15 @@ def _api_response(content="Hi there", model="claude-opus-4-6", stop_reason="end_
     }
 
 
-class TestRestAnthropicLlmInit:
+class TestNativeRestAnthropicLlmInit:
     def test_model_provider_set(self):
         assert _llm().model_provider == "anthropic"
 
     def test_base_url(self):
-        assert RestAnthropicLlm.ANTHROPIC_BASE_URL == "https://api.anthropic.com/v1"
+        assert NativeRestAnthropicLlm.ANTHROPIC_BASE_URL == "https://api.anthropic.com/v1"
 
     def test_anthropic_version(self):
-        assert RestAnthropicLlm.ANTHROPIC_VERSION == "2023-06-01"
+        assert NativeRestAnthropicLlm.ANTHROPIC_VERSION == "2023-06-01"
 
 
 class TestRestAnthropicConvertMessages:

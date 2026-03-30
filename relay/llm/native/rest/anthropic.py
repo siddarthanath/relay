@@ -14,7 +14,7 @@ from relay.llm.schemas import LlmMessage, LlmRequest, LlmResponse, Role
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
  
-class RestAnthropicLlm(BaseLlm):
+class NativeRestAnthropicLlm(BaseLlm):
         
     ANTHROPIC_BASE_URL = "https://api.anthropic.com/v1"
     ANTHROPIC_VERSION = "2023-06-01"

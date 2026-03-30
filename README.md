@@ -50,15 +50,15 @@ flowchart TD
     end
 
     subgraph SDK["SDK Implementation"]
-        SDK_A["SdkAnthropicLlm"]
-        SDK_O["SdkOpenAILlm"]
-        SDK_G["SdkGoogleLlm"]
+        SDK_A["NativeSdkAnthropicLlm"]
+        SDK_O["NativeSdkOpenAILlm"]
+        SDK_G["NativeSdkGoogleLlm"]
     end
 
     subgraph REST["REST Implementation"]
-        REST_A["RestAnthropicLlm"]
-        REST_O["RestOpenAILlm"]
-        REST_G["RestGoogleLlm"]
+        REST_A["NativeRestAnthropicLlm"]
+        REST_O["NativeRestOpenAILlm"]
+        REST_G["NativeRestGoogleLlm"]
     end
 
     LLMs["External LLM APIs"]

@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 # Private Library
-from relay.llm.native.rest.google import RestGoogleLlm
+from relay.llm.native.rest.google import NativeRestGoogleLlm
 from relay.llm.schemas import LlmMessage, LlmRequest, LlmResponse, Role
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
@@ -25,9 +25,9 @@ async def _collect(gen):
     return [item async for item in gen]
 
 
-def _llm(model_name="gemini-2.0-flash") -> RestGoogleLlm:
-    with patch.object(RestGoogleLlm, "_create_client", return_value=MagicMock()):
-        return RestGoogleLlm(api_key="fake-key", model_name=model_name)
+def _llm(model_name="gemini-2.0-flash") -> NativeRestGoogleLlm:
+    with patch.object(NativeRestGoogleLlm, "_create_client", return_value=MagicMock()):
+        return NativeRestGoogleLlm(api_key="fake-key", model_name=model_name)
 
 
 def _request(**kwargs) -> LlmRequest:
@@ -52,12 +52,12 @@ def _api_response(text="Hi there", finish_reason="STOP",
     }
 
 
-class TestRestGoogleLlmInit:
+class TestNativeRestGoogleLlmInit:
     def test_model_provider_set(self):
         assert _llm().model_provider == "google"
 
     def test_base_url(self):
-        assert RestGoogleLlm.GOOGLE_BASE_URL == "https://generativelanguage.googleapis.com/v1beta/models"
+        assert NativeRestGoogleLlm.GOOGLE_BASE_URL == "https://generativelanguage.googleapis.com/v1beta/models"
 
 
 class TestRestGoogleConvertMessages:

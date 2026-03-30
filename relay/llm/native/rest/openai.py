@@ -14,7 +14,7 @@ from relay.llm.schemas import LlmMessage, LlmRequest, LlmResponse
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
  
-class RestOpenAILlm(BaseLlm):
+class NativeRestOpenAILlm(BaseLlm):
 
     OPENAI_BASE_URL = "https://api.openai.com/v1"
 

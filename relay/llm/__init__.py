@@ -1,4 +1,4 @@
-from relay.llm.native import RestAnthropicLlm, SdkAnthropicLlm, RestGoogleLlm, SdkGoogleLlm, RestOpenAILlm, SdkOpenAILlm
+from relay.llm.native import NativeRestAnthropicLlm, NativeSdkAnthropicLlm, NativeRestGoogleLlm, NativeSdkGoogleLlm, NativeRestOpenAILlm, NativeSdkOpenAILlm
 from relay.llm.base import BaseLlm
 from relay.llm.factory import LlmProviderFactory, LlmImplementationTypes, LlmModelProviderTypes
 from relay.llm.registry import LlmProviderRegistry
@@ -13,10 +13,10 @@ __all__ = [
     "LlmProviderRegistry",
     "LlmImplementationTypes",
     "LlmModelProviderTypes",
-    "RestAnthropicLlm",
-    "SdkAnthropicLlm",
-    "RestGoogleLlm",
-    "SdkGoogleLlm",
-    "RestOpenAILlm",
-    "SdkOpenAILlm",
+    "NativeRestAnthropicLlm",
+    "NativeSdkAnthropicLlm",
+    "NativeRestGoogleLlm",
+    "NativeSdkGoogleLlm",
+    "NativeRestOpenAILlm",
+    "NativeSdkOpenAILlm",
 ]

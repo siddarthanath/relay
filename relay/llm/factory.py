@@ -5,12 +5,12 @@ from typing import Literal, Dict, Tuple
 
 # Private Library
 from relay.llm.base import BaseLlm
-from relay.llm.native.sdk.anthropic import SdkAnthropicLlm
-from relay.llm.native.sdk.google import SdkGoogleLlm
-from relay.llm.native.sdk.openai import SdkOpenAILlm
-from relay.llm.native.rest.anthropic import RestAnthropicLlm
-from relay.llm.native.rest.google import RestGoogleLlm
-from relay.llm.native.rest.openai import RestOpenAILlm
+from relay.llm.native.sdk.anthropic import NativeSdkAnthropicLlm
+from relay.llm.native.sdk.google import NativeSdkGoogleLlm
+from relay.llm.native.sdk.openai import NativeSdkOpenAILlm
+from relay.llm.native.rest.anthropic import NativeRestAnthropicLlm
+from relay.llm.native.rest.google import NativeRestGoogleLlm
+from relay.llm.native.rest.openai import NativeRestOpenAILlm
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
 """ 
@@ -28,12 +28,12 @@ class LlmProviderFactory:
     """Factory for creating LLM provider instances."""
 
     _PROVIDER_REGISTRY: Dict[Tuple[str, str], type[BaseLlm]] = {
-        ("sdk", "anthropic"): SdkAnthropicLlm,
-        ("sdk", "google"): SdkGoogleLlm,
-        ("sdk", "openai"): SdkOpenAILlm,
-        ("rest", "anthropic"): RestAnthropicLlm,
-        ("rest", "google"): RestGoogleLlm,
-        ("rest", "openai"): RestOpenAILlm,
+        ("sdk", "anthropic"): NativeSdkAnthropicLlm,
+        ("sdk", "google"): NativeSdkGoogleLlm,
+        ("sdk", "openai"): NativeSdkOpenAILlm,
+        ("rest", "anthropic"): NativeRestAnthropicLlm,
+        ("rest", "google"): NativeRestGoogleLlm,
+        ("rest", "openai"): NativeRestOpenAILlm,
     }
 
     @classmethod

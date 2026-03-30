@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 # Private Library
-from relay.llm.native.sdk.anthropic import SdkAnthropicLlm
+from relay.llm.native.sdk.anthropic import NativeSdkAnthropicLlm
 from relay.llm.schemas import LlmMessage, LlmRequest, LlmResponse, Role
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
@@ -24,9 +24,9 @@ async def _collect(gen):
     return [item async for item in gen]
 
 
-def _llm(model_name="claude-opus-4-6") -> SdkAnthropicLlm:
-    with patch.object(SdkAnthropicLlm, "_create_client", return_value=MagicMock()):
-        return SdkAnthropicLlm(api_key="fake-key", model_name=model_name)
+def _llm(model_name="claude-opus-4-6") -> NativeSdkAnthropicLlm:
+    with patch.object(NativeSdkAnthropicLlm, "_create_client", return_value=MagicMock()):
+        return NativeSdkAnthropicLlm(api_key="fake-key", model_name=model_name)
 
 
 def _request(**kwargs) -> LlmRequest:
@@ -44,7 +44,7 @@ def _mock_generate_response(content="Hi there", model="claude-opus-4-6", stop_re
     return resp
 
 
-class TestSdkAnthropicLlmInit:
+class TestNativeSdkAnthropicLlmInit:
     def test_model_provider_set(self):
         llm = _llm()
         assert llm.model_provider == "anthropic"

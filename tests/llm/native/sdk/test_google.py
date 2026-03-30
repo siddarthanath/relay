@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 # Private Library
-from relay.llm.native.sdk.google import SdkGoogleLlm
+from relay.llm.native.sdk.google import NativeSdkGoogleLlm
 from relay.llm.schemas import LlmMessage, LlmRequest, LlmResponse, Role
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
@@ -24,9 +24,9 @@ async def _collect(gen):
     return [item async for item in gen]
 
 
-def _llm(model_name="gemini-2.0-flash") -> SdkGoogleLlm:
-    with patch.object(SdkGoogleLlm, "_create_client", return_value=MagicMock()):
-        return SdkGoogleLlm(api_key="fake-key", model_name=model_name)
+def _llm(model_name="gemini-2.0-flash") -> NativeSdkGoogleLlm:
+    with patch.object(NativeSdkGoogleLlm, "_create_client", return_value=MagicMock()):
+        return NativeSdkGoogleLlm(api_key="fake-key", model_name=model_name)
 
 
 def _request(**kwargs) -> LlmRequest:
@@ -45,7 +45,7 @@ def _mock_generate_response(text="Hi there", finish_reason_name="STOP"):
     return resp
 
 
-class TestSdkGoogleLlmInit:
+class TestNativeSdkGoogleLlmInit:
     def test_model_provider_set(self):
         assert _llm().model_provider == "google"
 

@@ -14,7 +14,7 @@ from relay.llm.schemas import LlmMessage, LlmRequest, LlmResponse, Role
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
 
-class SdkGoogleLlm(BaseLlm):
+class NativeSdkGoogleLlm(BaseLlm):
 
     def __init__(self, api_key: str, model_name: str | None = None) -> None:
         super().__init__("google", api_key, model_name)

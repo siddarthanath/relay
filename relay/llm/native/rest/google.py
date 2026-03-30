@@ -14,7 +14,7 @@ from relay.llm.schemas import LlmMessage, LlmRequest, LlmResponse, Role
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
 
-class RestGoogleLlm(BaseLlm):
+class NativeRestGoogleLlm(BaseLlm):
 
     GOOGLE_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
 
