@@ -115,7 +115,7 @@ response = await llm.generate(request)
 print(response.content)
 ```
 
-Use the **registry** when keys live in a `.env` file — configure once, fetch anywhere:
+Use the **registry** when keys live in a `.env` file - configure once, fetch anywhere:
 
 ```python
 # Imports
@@ -194,7 +194,7 @@ python -m relay.cli
 streamlit run relay/app.py
 ```
 
-Both prompt for provider, implementation (sdk/rest), and API key at launch — nothing hardcoded, nothing stored. The Streamlit app pulls a live model list from the provider so you always see what's available.
+Both prompt for provider, implementation (sdk/rest), and API key at launch - nothing hardcoded, nothing stored. The Streamlit app pulls a live model list from the provider so you always see what's available.
 
 ---
 
@@ -202,7 +202,7 @@ Both prompt for provider, implementation (sdk/rest), and API key at launch — n
 
 | Version | Feature | Status |
 |:---:|:---| :---|
-| v1 | Non-streaming, streaming, system prompts — SDK + REST | ✓
+| v1 | Non-streaming, streaming, system prompts - SDK + REST | ✓
 | v2 | Thinking mode (o1, Claude extended thinking) | ✗
 | v3 | Tool and function calling | ✗
 | v4 | Image generation | ✗

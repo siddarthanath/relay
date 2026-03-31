@@ -9,25 +9,50 @@ description = "A minimal unified Python interface for LLMs."
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
+
+authors = [
+    { name = "Siddarth Nath" }
+]
+
+keywords = ["llm", "ai", "openai", "anthropic", "google", "native", "sdk"]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+]
+
 dependencies = [
-    "anthropic>=0.86.0",
     "httpx>=0.27.0",
-    "click>=8.0.0",
-    "google-genai>=1.68.0",
-    "openai>=2.29.0",
     "pydantic>=2.0",
-    "streamlit>=1.40.0",
+    "click>=8.0.0",
 ]
 
 [project.optional-dependencies]
+openai = ["openai>=2.29.0"]
+anthropic = ["anthropic>=0.86.0"]
+google = ["google-genai>=1.68.0"]
+ui = ["streamlit>=1.40.0"]
+
+all = [
+    "openai>=2.29.0",
+    "anthropic>=0.86.0",
+    "google-genai>=1.68.0",
+    "streamlit>=1.40.0",
+]
+
 dev = [
     "pytest>=7.0",
     "pytest-cov",
-    "pytest-asyncio"
+    "pytest-asyncio",
 ]
 
 [project.scripts]
 relay = "relay.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/siddarthanath/relay"
 
 [tool.hatch.build.targets.wheel]
 packages = ["relay"]
