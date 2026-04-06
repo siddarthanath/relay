@@ -22,12 +22,21 @@ class BaseLlm(ABC):
     def __init__(self, model_provider: str, api_key: str, model_name: str | None = None) -> None:
         self.model_provider = model_provider
         self.model_name = model_name
+        # This indirectly handles the context manager creation since this is sync
         self._client = self._create_client(api_key)
 
     @property
     def client(self):
         """Return the provider-specific API client instance."""
         return self._client
+
+    async def __aenter__(self) -> "BaseLlm":
+        return self
+
+    async def __aexit__(self, _exc_type, _exc_val, _exc_tb) -> bool:
+        if hasattr(self._client, "aclose"):
+            await self._client.aclose()
+        return False
 
     @overload
     async def generate(self, request: LlmRequest, stream: Literal[False] = ...) -> LlmResponse: ...

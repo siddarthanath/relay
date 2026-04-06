@@ -93,7 +93,7 @@ flowchart TD
 
 ## Usage
 
-### 1. Basic generation
+### 1a. Basic generation
 
 Use the **factory** when you supply the API key yourself at call time:
 
@@ -132,6 +132,29 @@ request  = LlmRequest(messages=[LlmMessage(role=Role.user,
 response = await llm.generate(request)
 print(response.content)
 ```
+
+### 1b. Context manager
+
+Use `async with` to ensure the underlying HTTP client is closed when you're done:
+
+```python
+# Imports
+from relay.llm import LlmProviderFactory
+from relay.llm.schemas import LlmRequest, LlmMessage, Role
+# Arrange (LLM creation)
+llm = LlmProviderFactory.create(provider_type="openai",
+                                api_key="sk-...",
+                                model_name="gpt-4o")
+request = LlmRequest(messages=[LlmMessage(role=Role.user,
+                                          content="Explain transformers in one paragraph.")
+                              ],
+                     temperature=0.7)
+# Act (LLM generation) — client is closed automatically on exit
+async with llm:
+    response = await llm.generate(request)
+    print(response.content)
+```
+
 
 ### 2. Listing available models
 
