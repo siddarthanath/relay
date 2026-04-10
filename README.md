@@ -9,7 +9,8 @@ One request schema. One response schema. Swap providers without touching your ap
 
 - Building with LLMs always ends up with the same problem - every provider has a different SDK, a different message format, a different streaming interface. Switching from OpenAI to Anthropic means rewriting your entire LLM layer.
 - Relay standardises this into one request schema and one response schema. Swap providers by changing one string. The rest of your code doesn't move.
-- Implementations are available via both **SDK** (direct) and **REST** (from scratch via httpx) - so you can see exactly what provider libraries are doing under the hood - it is not magic!
+
+Implementations are available via both **SDK** (direct) and **REST** (from scratch via httpx) - so you can see exactly what provider libraries are doing under the hood - it is not magic!
 
 ![alt text](docs/relay_st.gif)
 
