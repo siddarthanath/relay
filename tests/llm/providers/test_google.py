@@ -6,10 +6,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 # Third Party Library
 import pytest
+import httpx
+from google.genai import errors as genai_errors
 
 # Private Library
-from relay.llm.native.sdk.google import NativeSdkGoogleLlm
-from relay.llm.schemas import LlmMessage, LlmRequest, LlmResponse, Role
+from relay.llm.providers.google import GoogleLlm
+from relay.llm.schemas import LlmMessage, LlmRequest, LlmResponse, Role, ImagePart
+from relay.llm.errors import RateLimitError, AuthError, OverloadedError, BadRequestError, ProviderError, TimeoutError
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
 
@@ -24,9 +27,9 @@ async def _collect(gen):
     return [item async for item in gen]
 
 
-def _llm(model_name="gemini-2.0-flash") -> NativeSdkGoogleLlm:
-    with patch.object(NativeSdkGoogleLlm, "_create_client", return_value=MagicMock()):
-        return NativeSdkGoogleLlm(api_key="fake-key", model_name=model_name)
+def _llm(model_name="gemini-2.0-flash") -> GoogleLlm:
+    with patch.object(GoogleLlm, "_create_client", return_value=MagicMock()):
+        return GoogleLlm(api_key="fake-key", model_name=model_name)
 
 
 def _request(**kwargs) -> LlmRequest:
@@ -45,7 +48,7 @@ def _mock_generate_response(text="Hi there", finish_reason_name="STOP"):
     return resp
 
 
-class TestNativeSdkGoogleLlmInit:
+class TestGoogleLlmInit:
     def test_model_provider_set(self):
         assert _llm().model_provider == "google"
 
@@ -145,9 +148,9 @@ class TestSdkGoogleGenerate:
         llm = _llm()
         llm._client.aio.models.generate_content = AsyncMock(return_value=_mock_generate_response())
         response = asyncio.run(llm._generate(_request()))
-        assert response.usage["prompt_tokens"] == 8
-        assert response.usage["completion_tokens"] == 4
-        assert response.usage["total_tokens"] == 12
+        assert response.usage.prompt_tokens == 8
+        assert response.usage.completion_tokens == 4
+        assert response.usage.total_tokens == 12
 
     def test_no_candidates_finish_reason_unknown(self):
         llm = _llm()
@@ -163,9 +166,119 @@ class TestSdkGoogleGenerate:
         resp.usage_metadata = None
         llm._client.aio.models.generate_content = AsyncMock(return_value=resp)
         response = asyncio.run(llm._generate(_request()))
-        assert response.usage["prompt_tokens"] == 0
-        assert response.usage["completion_tokens"] == 0
-        assert response.usage["total_tokens"] == 0
+        assert response.usage.prompt_tokens == 0
+        assert response.usage.completion_tokens == 0
+        assert response.usage.total_tokens == 0
+
+
+SCHEMA = {
+    "type": "object",
+    "properties": {"score": {"type": "integer"}},
+    "required": ["score"],
+}
+
+
+class TestSdkGoogleStructuredOutput:
+    def test_config_sets_json_mode_and_schema(self):
+        llm = _llm()
+        config = llm._build_config(_request(structured_output_schema=SCHEMA))
+        assert config.response_mime_type == "application/json"
+        assert config.response_schema is not None
+
+    def test_config_no_json_mode_without_schema(self):
+        llm = _llm()
+        config = llm._build_config(_request())
+        assert config.response_mime_type is None
+
+    def test_structured_populated_and_validated(self):
+        llm = _llm()
+        llm._client.aio.models.generate_content = AsyncMock(
+            return_value=_mock_generate_response(text='{"score": 7}')
+        )
+        response = asyncio.run(llm._generate(_request(structured_output_schema=SCHEMA)))
+        assert response.structured == {"score": 7}
+
+    def test_structured_none_without_schema(self):
+        llm = _llm()
+        llm._client.aio.models.generate_content = AsyncMock(return_value=_mock_generate_response())
+        response = asyncio.run(llm._generate(_request()))
+        assert response.structured is None
+
+    def test_malformed_json_raises_bad_request(self):
+        llm = _llm()
+        llm._client.aio.models.generate_content = AsyncMock(
+            return_value=_mock_generate_response(text="not json")
+        )
+        with pytest.raises(BadRequestError):
+            asyncio.run(llm._generate(_request(structured_output_schema=SCHEMA)))
+
+    def test_non_conforming_raises_bad_request(self):
+        llm = _llm()
+        llm._client.aio.models.generate_content = AsyncMock(
+            return_value=_mock_generate_response(text='{"score": "high"}')
+        )
+        with pytest.raises(BadRequestError):
+            asyncio.run(llm._generate(_request(structured_output_schema=SCHEMA)))
+
+
+class TestSdkGoogleImageConversion:
+    def test_image_part_native_inline_data(self):
+        llm = _llm()
+        msg = LlmMessage(role=Role.user, content=[ImagePart(mime_type="image/png", data="YWJj")])
+        result = llm._convert_messages([msg])
+        assert result == [{
+            "role": "user",
+            "parts": [{"inline_data": {"mime_type": "image/png", "data": "YWJj"}}],
+        }]
+
+    def test_str_content_unchanged(self):
+        llm = _llm()
+        result = llm._convert_messages([LlmMessage(role=Role.user, content="Hello")])
+        assert result == [{"role": "user", "parts": [{"text": "Hello"}]}]
+
+
+class TestSdkGoogleErrorMapping:
+    def test_429_maps_to_rate_limit(self):
+        llm = _llm()
+        llm._client.aio.models.generate_content = AsyncMock(side_effect=genai_errors.APIError(429, {}, None))
+        with pytest.raises(RateLimitError):
+            asyncio.run(llm._generate(_request()))
+
+    def test_401_maps_to_auth(self):
+        llm = _llm()
+        llm._client.aio.models.generate_content = AsyncMock(side_effect=genai_errors.APIError(401, {}, None))
+        with pytest.raises(AuthError):
+            asyncio.run(llm._generate(_request()))
+
+    def test_503_maps_to_overloaded(self):
+        llm = _llm()
+        llm._client.aio.models.generate_content = AsyncMock(side_effect=genai_errors.APIError(503, {}, None))
+        with pytest.raises(OverloadedError):
+            asyncio.run(llm._generate(_request()))
+
+    def test_500_maps_to_provider_error(self):
+        llm = _llm()
+        llm._client.aio.models.generate_content = AsyncMock(side_effect=genai_errors.APIError(500, {}, None))
+        with pytest.raises(ProviderError):
+            asyncio.run(llm._generate(_request()))
+
+    def test_timeout_maps_to_timeout(self):
+        llm = _llm()
+        llm._client.aio.models.generate_content = AsyncMock(side_effect=httpx.TimeoutException("slow"))
+        with pytest.raises(TimeoutError):
+            asyncio.run(llm._generate(_request()))
+
+
+class TestSdkGoogleRetry:
+    def test_retries_then_succeeds(self):
+        llm = _llm()
+        llm._client.aio.models.generate_content = AsyncMock(
+            side_effect=[genai_errors.APIError(503, {}, None), _mock_generate_response(text="ok")]
+        )
+        with patch("relay.llm.base.asyncio.sleep", new=AsyncMock()):
+            response = asyncio.run(llm.generate(_request()))
+        assert response.content == "ok"
+        assert llm._client.aio.models.generate_content.call_count == 2
 
 
 class TestSdkGoogleStream:

@@ -50,7 +50,7 @@ def _init_state() -> None:
         "model_name":       None,
         "event_loop":       None,
         "available_models": [],
-        "models_context":   None,   # "{model_family}:{implementation}" — used to invalidate cache
+        "models_context":   None,   # "{model_family}" — used to invalidate cache
     }
     for key, val in defaults.items():
         if key not in st.session_state:
@@ -61,7 +61,6 @@ def _init_state() -> None:
 def _handle_load_models() -> None:
     api_key = st.session_state.get("api_key", "").strip()
     model = st.session_state.get("model_family", "google")
-    impl = st.session_state.get("implementation", "sdk")
 
     if not api_key:
         st.sidebar.error("Enter an API key first.")
@@ -70,10 +69,10 @@ def _handle_load_models() -> None:
     with st.sidebar:
         with st.spinner("Loading models..."):
             try:
-                temp_llm = LlmProviderFactory.create(model, api_key, implementation=impl)
+                temp_llm = LlmProviderFactory.create(model, api_key)
                 models   = asyncio.run(temp_llm.list_models())
                 st.session_state.available_models = models
-                st.session_state.models_context   = f"{model}:{impl}"
+                st.session_state.models_context   = model
                 # Reset connected LLM - model list changed
                 st.session_state.llm = None
                 st.session_state.model_name = None
@@ -84,7 +83,6 @@ def _handle_connect() -> None:
     api_key = st.session_state.get("api_key", "").strip()
     model = st.session_state.get("model_family", "google")
     model_name = st.session_state.get("model_version", "")
-    impl = st.session_state.get("implementation", "sdk")
 
     if not api_key:
         st.sidebar.error("API key is required.")
@@ -96,7 +94,7 @@ def _handle_connect() -> None:
     with st.sidebar:
         with st.spinner("Connecting..."):
             try:
-                st.session_state.llm        = LlmProviderFactory.create(model, api_key, model_name, implementation=impl)
+                st.session_state.llm        = LlmProviderFactory.create(model, api_key, model_name)
                 st.session_state.model_name = model_name
             except Exception as e:
                 st.error(f"Failed to connect: {e}")
@@ -119,16 +117,14 @@ def _sidebar() -> None:
         st.subheader("Configuration")
 
         st.selectbox("Interface Provider", ["native"], key="provider")
-        impl  = st.selectbox("Implementation", ["sdk", "rest"], key="implementation")
         model = st.selectbox("Model Family", ["anthropic", "google", "openai"], key="model_family")
 
         st.text_input("API Key", type="password", placeholder=f"{model.capitalize()} API key", key="api_key")
 
-        # Invalidate cached model list when provider/implementation changes.
-        current_context = f"{model}:{impl}"
-        if st.session_state.models_context != current_context:
+        # Invalidate cached model list when the model family changes.
+        if st.session_state.models_context != model:
             st.session_state.available_models = []
-            st.session_state.models_context   = current_context
+            st.session_state.models_context   = model
 
         if st.button("Load Models", use_container_width=True):
             _handle_load_models()

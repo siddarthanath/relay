@@ -9,24 +9,18 @@ import pytest
 
 # Private Library
 from relay.llm.registry import LlmProviderRegistry
-from relay.llm.native.sdk.anthropic import NativeSdkAnthropicLlm
-from relay.llm.native.sdk.google import NativeSdkGoogleLlm
-from relay.llm.native.sdk.openai import NativeSdkOpenAILlm
-from relay.llm.native.rest.anthropic import NativeRestAnthropicLlm
-from relay.llm.native.rest.google import NativeRestGoogleLlm
-from relay.llm.native.rest.openai import NativeRestOpenAILlm
+from relay.llm.providers.anthropic import AnthropicLlm
+from relay.llm.providers.google import GoogleLlm
+from relay.llm.providers.openai import OpenAILlm
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
 
 # Helpers
 
 _ALL_CLASSES = [
-    NativeSdkAnthropicLlm,
-    NativeSdkGoogleLlm,
-    NativeSdkOpenAILlm,
-    NativeRestAnthropicLlm,
-    NativeRestGoogleLlm,
-    NativeRestOpenAILlm,
+    AnthropicLlm,
+    GoogleLlm,
+    OpenAILlm,
 ]
 
 
@@ -62,34 +56,23 @@ class TestLlmProviderRegistry:
         with pytest.raises(KeyError):
             registry.get("anthropic")
 
-    def test_registers_sdk_and_rest_for_each_key(self, monkeypatch):
+    def test_registers_one_instance_for_each_key(self, monkeypatch):
         registry = _registry_with_all_keys(monkeypatch)
-        assert ("sdk", "anthropic") in registry.available
-        assert ("rest", "anthropic") in registry.available
-        assert ("sdk", "openai") in registry.available
-        assert ("rest", "openai") in registry.available
-        assert ("sdk", "google") in registry.available
-        assert ("rest", "google") in registry.available
+        assert "anthropic" in registry.available
+        assert "openai" in registry.available
+        assert "google" in registry.available
 
-    def test_get_returns_sdk_by_default(self, monkeypatch):
+    def test_get_returns_provider_instance(self, monkeypatch):
         registry = _registry_with_all_keys(monkeypatch)
-        llm = registry.get("anthropic")
-        assert isinstance(llm, NativeSdkAnthropicLlm)
+        assert isinstance(registry.get("anthropic"), AnthropicLlm)
 
-    def test_get_rest_implementation(self, monkeypatch):
+    def test_get_google(self, monkeypatch):
         registry = _registry_with_all_keys(monkeypatch)
-        llm = registry.get("anthropic", implementation="rest")
-        assert isinstance(llm, NativeRestAnthropicLlm)
+        assert isinstance(registry.get("google"), GoogleLlm)
 
-    def test_get_google_sdk(self, monkeypatch):
+    def test_get_openai(self, monkeypatch):
         registry = _registry_with_all_keys(monkeypatch)
-        llm = registry.get("google")
-        assert isinstance(llm, NativeSdkGoogleLlm)
-
-    def test_get_openai_rest(self, monkeypatch):
-        registry = _registry_with_all_keys(monkeypatch)
-        llm = registry.get("openai", implementation="rest")
-        assert isinstance(llm, NativeRestOpenAILlm)
+        assert isinstance(registry.get("openai"), OpenAILlm)
 
     def test_get_missing_provider_raises_key_error(self, monkeypatch):
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-fake")
@@ -110,7 +93,7 @@ class TestLlmProviderRegistry:
             for p in _patch_all_clients():
                 stack.enter_context(p)
             registry = LlmProviderRegistry()
-        assert ("sdk", "google") in registry.available
+        assert "google" in registry.available
 
     def test_gemini_key_does_not_register_twice(self, monkeypatch):
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
@@ -121,8 +104,8 @@ class TestLlmProviderRegistry:
             for p in _patch_all_clients():
                 stack.enter_context(p)
             registry = LlmProviderRegistry()
-        google_entries = [k for k in registry.available if k[1] == "google"]
-        assert len(google_entries) == 2  # exactly sdk + rest, not 4
+        google_entries = [k for k in registry.available if k == "google"]
+        assert len(google_entries) == 1  # exactly one, not two
 
     def test_model_names_passed_through(self, monkeypatch):
         registry = _registry_with_all_keys(
@@ -143,7 +126,7 @@ class TestLlmProviderRegistry:
             for p in _patch_all_clients():
                 stack.enter_context(p)
             registry = LlmProviderRegistry(env_file=env_file)
-        assert ("sdk", "anthropic") in registry.available
+        assert "anthropic" in registry.available
 
     def test_env_file_not_found_raises(self, tmp_path):
         with pytest.raises(FileNotFoundError):
@@ -158,13 +141,10 @@ class TestLlmProviderRegistry:
                 stack.enter_context(p)
             registry = LlmProviderRegistry(env_file=env_file)
         # Instance should exist (from shell key), and model_provider is set correctly
-        assert ("sdk", "anthropic") in registry.available
+        assert "anthropic" in registry.available
 
-    def test_available_returns_list_of_tuples(self, monkeypatch):
+    def test_available_returns_list_of_provider_names(self, monkeypatch):
         registry = _registry_with_all_keys(monkeypatch)
         for entry in registry.available:
-            assert isinstance(entry, tuple)
-            assert len(entry) == 2
-            impl, provider = entry
-            assert impl in ("sdk", "rest")
-            assert provider in ("anthropic", "openai", "google")
+            assert isinstance(entry, str)
+            assert entry in ("anthropic", "openai", "google")

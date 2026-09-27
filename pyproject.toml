@@ -26,19 +26,21 @@ classifiers = [
 dependencies = [
     "httpx>=0.27.0",
     "pydantic>=2.0",
-    "click>=8.0.0",
+    "jsonschema>=4.0",
 ]
 
 [project.optional-dependencies]
 openai = ["openai>=2.29.0"]
 anthropic = ["anthropic>=0.86.0"]
 google = ["google-genai>=1.68.0"]
+cli = ["click>=8.0.0"]
 ui = ["streamlit>=1.40.0"]
 
 all = [
     "openai>=2.29.0",
     "anthropic>=0.86.0",
     "google-genai>=1.68.0",
+    "click>=8.0.0",
     "streamlit>=1.40.0",
 ]
 
@@ -48,11 +50,12 @@ dev = [
     "pytest-asyncio",
 ]
 
-[project.scripts]
-relay = "relay.cli:main"
-
 [project.urls]
 Homepage = "https://github.com/siddarthanath/relay"
 
 [tool.hatch.build.targets.wheel]
 packages = ["relay"]
+
+# py.typed marker so type hints are exported to consumers (PEP 561).
+[tool.hatch.build.targets.wheel.force-include]
+"relay/py.typed" = "relay/py.typed"

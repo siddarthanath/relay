@@ -7,7 +7,15 @@ import pytest
 from pydantic import ValidationError
 
 # Private Library
-from relay.llm.schemas import LlmMessage, LlmRequest, LlmResponse, Role
+from relay.llm.schemas import (
+    LlmMessage,
+    LlmRequest,
+    LlmResponse,
+    Role,
+    Usage,
+    TextPart,
+    ImagePart,
+)
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
 
@@ -80,6 +88,45 @@ class TestLlmMessage:
             LlmMessage(role=Role.user)
 
 
+class TestContentParts:
+    def test_str_content_backward_compat(self):
+        m = _message(content="Hello")
+        assert m.content == "Hello"
+
+    def test_list_of_text_part(self):
+        m = _message(content=[TextPart(text="Hi")])
+        assert isinstance(m.content, list)
+        assert m.content[0].text == "Hi"
+
+    def test_image_part_fields(self):
+        part = ImagePart(mime_type="image/png", data="YWJj")
+        assert part.type == "image"
+        assert part.mime_type == "image/png"
+        assert part.data == "YWJj"
+
+    def test_parts_discriminated_from_dicts(self):
+        m = LlmMessage(
+            role=Role.user,
+            content=[{"type": "text", "text": "look"}, {"type": "image", "mime_type": "image/jpeg", "data": "AAAA"}],
+        )
+        assert isinstance(m.content[0], TextPart)
+        assert isinstance(m.content[1], ImagePart)
+
+    def test_invalid_part_type_raises(self):
+        with pytest.raises(ValidationError):
+            LlmMessage(role=Role.user, content=[{"type": "audio", "data": "x"}])
+
+
+class TestUsage:
+    def test_fields(self):
+        u = Usage(prompt_tokens=1, completion_tokens=2, total_tokens=3)
+        assert (u.prompt_tokens, u.completion_tokens, u.total_tokens) == (1, 2, 3)
+
+    def test_coerced_from_dict_on_response(self):
+        r = _response()
+        assert isinstance(r.usage, Usage)
+
+
 class TestLlmRequest:
     def test_valid_minimal(self):
         r = _request()
@@ -91,9 +138,6 @@ class TestLlmRequest:
 
     def test_default_max_tokens_none(self):
         assert _request().max_tokens is None
-
-    def test_default_thinking_mode_false(self):
-        assert _request().thinking_mode is False
 
     def test_default_system_prompt_none(self):
         assert _request().system_prompt is None
@@ -186,17 +230,18 @@ class TestLlmResponse:
         assert r.model == "claude-opus-4-6"
         assert r.finish_reason == "stop"
 
-    def test_usage_keys(self):
+    def test_usage_is_typed(self):
         r = _response()
-        assert "prompt_tokens" in r.usage
-        assert "completion_tokens" in r.usage
-        assert "total_tokens" in r.usage
+        assert isinstance(r.usage, Usage)
 
     def test_usage_values(self):
         r = _response()
-        assert r.usage["prompt_tokens"] == 10
-        assert r.usage["completion_tokens"] == 5
-        assert r.usage["total_tokens"] == 15
+        assert r.usage.prompt_tokens == 10
+        assert r.usage.completion_tokens == 5
+        assert r.usage.total_tokens == 15
+
+    def test_structured_defaults_none(self):
+        assert _response().structured is None
 
     def test_missing_content_raises(self):
         with pytest.raises(ValidationError):

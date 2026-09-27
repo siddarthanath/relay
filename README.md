@@ -10,7 +10,7 @@ One request schema. One response schema. Swap providers without touching your ap
 - Building with LLMs always ends up with the same problem - every provider has a different SDK, a different message format, a different streaming interface. Switching from OpenAI to Anthropic means rewriting your entire LLM layer.
 - Relay standardises this into one request schema and one response schema. Swap providers by changing one string. The rest of your code doesn't move.
 
-Implementations are available via both **SDK** (direct) and **REST** (from scratch via httpx) - so you can see exactly what provider libraries are doing under the hood - it is not magic!
+Providers are implemented on top of their official **SDKs**, wrapped behind a single typed interface.
 
 ![alt text](docs/relay_st.gif)
 
@@ -55,16 +55,10 @@ flowchart TD
         LIST["list_models()"]
     end
 
-    subgraph SDK["SDK Implementation"]
-        SDK_A["NativeSdkAnthropicLlm"]
-        SDK_O["NativeSdkOpenAILlm"]
-        SDK_G["NativeSdkGoogleLlm"]
-    end
-
-    subgraph REST["REST Implementation"]
-        REST_A["NativeRestAnthropicLlm"]
-        REST_O["NativeRestOpenAILlm"]
-        REST_G["NativeRestGoogleLlm"]
+    subgraph Providers["Providers"]
+        P_A["AnthropicLlm"]
+        P_O["OpenAILlm"]
+        P_G["GoogleLlm"]
     end
 
     LLMs["External LLM APIs"]
@@ -75,20 +69,13 @@ flowchart TD
     ST --> Factory
     User --> Factory
     Factory --> Base
-    Base --> SDK
-    Base --> REST
-    SDK --> SDK_A
-    SDK --> SDK_O
-    SDK --> SDK_G
-    REST --> REST_A
-    REST --> REST_O
-    REST --> REST_G
-    SDK_A --> LLMs
-    SDK_O --> LLMs
-    SDK_G --> LLMs
-    REST_A --> LLMs
-    REST_O --> LLMs
-    REST_G --> LLMs
+    Base --> Providers
+    Providers --> P_A
+    Providers --> P_O
+    Providers --> P_G
+    P_A --> LLMs
+    P_O --> LLMs
+    P_G --> LLMs
     LLMs --> Base
     Base --> User
     REQ -.-> GEN
@@ -108,10 +95,9 @@ Use the **factory** when you supply the API key yourself at call time:
 from relay.llm import LlmProviderFactory
 from relay.llm.schemas import LlmRequest, LlmMessage, Role
 # Arrange (LLM creation)
-llm = LlmProviderFactory.create(provider_type="google",
+llm = LlmProviderFactory.create(provider="google",
                                 api_key="AIza...",
-                                model_name="gemini-2.5-flash",
-                                implementation="sdk")
+                                model_name="gemini-2.5-flash")
 request = LlmRequest(messages=[LlmMessage(role=Role.user, 
                                           content="Explain transformers in one paragraph.")
                               ],
@@ -129,7 +115,7 @@ from relay.llm import LlmProviderRegistry
 from relay.llm.schemas import LlmRequest, LlmMessage, Role
 # Arrange (LLM creation)
 registry = LlmProviderRegistry(env_file=".env")
-llm = registry.get("google")   # Default implementation is sdk
+llm = registry.get("google")
 request  = LlmRequest(messages=[LlmMessage(role=Role.user, 
                                            content="Explain transformers in one paragraph.")
                                ],
@@ -148,7 +134,7 @@ Use `async with` to ensure the underlying HTTP client is closed when you're done
 from relay.llm import LlmProviderFactory
 from relay.llm.schemas import LlmRequest, LlmMessage, Role
 # Arrange (LLM creation)
-llm = LlmProviderFactory.create(provider_type="openai",
+llm = LlmProviderFactory.create(provider="openai",
                                 api_key="sk-...",
                                 model_name="gpt-4o")
 request = LlmRequest(messages=[LlmMessage(role=Role.user,
@@ -165,7 +151,7 @@ async with llm:
 ### 2. Listing available models
 
 ```python
-llm = LlmProviderFactory.create(provider_type="google", 
+llm = LlmProviderFactory.create(provider="google", 
                                 api_key="AIza...")
 models = await llm.list_models()
 print(models)
@@ -191,39 +177,31 @@ request = LlmRequest(messages=[LlmMessage(role=Role.user,
 
 ```python
 # Same request, different provider — no other changes needed
-llm = LlmProviderFactory.create(provider_type="anthropic", 
+llm = LlmProviderFactory.create(provider="anthropic", 
                                 api_key="sk-ant-...", 
                                 model_name="claude-sonnet-4-20250514")
 response = await llm.generate(request)
-```
-
-### 6. Switching implementations
-
-```python
-# Same provider, REST instead of SDK — useful for understanding what's happening on the wire
-llm = LlmProviderFactory.create(provider_type="openai", 
-                                api_key="sk-..."
-                                model_name="gpt-4o-mini",
-                                implementation="rest")
 ```
 
 ---
 
 ## Interfaces
 
-Relay ships with two ready-made interfaces for interacting with any provider directly.
+Relay ships with two ready-made example interfaces (in `examples/`) for interacting with any provider directly.
 
 **CLI**
 ```bash
-python -m relay.cli
+python examples/cli.py
 ```
 
 **Streamlit app**
 ```bash
-streamlit run relay/app.py
+streamlit run examples/streamlit_app.py
 ```
 
-Both prompt for provider, implementation (sdk/rest), and API key at launch - nothing hardcoded, nothing stored. The Streamlit app pulls a live model list from the provider so you always see what's available.
+Both prompt for provider and API key at launch - nothing hardcoded, nothing stored. The Streamlit app pulls a live model list from the provider so you always see what's available.
+
+> The CLI needs the `cli` extra (`pip install -e ".[cli]"`) and the Streamlit app needs the `ui` extra (`pip install -e ".[ui]"`). Both are included in `all`.
 
 ---
 
@@ -231,7 +209,7 @@ Both prompt for provider, implementation (sdk/rest), and API key at launch - not
 
 | Version | Feature | Status |
 |:---:|:---| :---|
-| v1 | Non-streaming, streaming, system prompts - SDK + REST | ✓
+| v1 | Non-streaming, streaming, system prompts | ✓
 | v2 | Thinking mode (o1, Claude extended thinking) | ✗
 | v3 | Tool and function calling | ✗
 | v4 | Image generation | ✗

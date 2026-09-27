@@ -11,7 +11,7 @@ import click
 # Private Library
 from relay.llm.factory import LlmProviderFactory
 from relay.llm.schemas import LlmMessage, LlmRequest, Role
-from relay.llm.constants import _PROVIDERS, _IMPLEMENTATIONS, _MODELS
+from relay.llm.constants import _PROVIDERS
 
 # ────────────────────────────────────────────────────── Code ──────────────────────────────────────────────────────── #
 
@@ -104,33 +104,17 @@ def _pick_model(llm) -> str:
 def _setup():
     """Interactive setup sequence. Returns (llm, model_name)."""
 
-    _header("Step 1 of 4  —  Interface Provider")
-    _echo("  How do you want to connect to the model?")
-    _echo()
-    _echo("    native     Direct connection (no middleware)")
-    _echo("    langchain  LangChain abstraction layer  [coming soon]")
-    _echo()
-    _prompt("Provider", choices=_PROVIDERS)  # only "native" supported
-
-    _header("Step 2 of 4  —  Implementation")
-    _echo("  Which backend should be used to call the API?")
-    _echo()
-    _echo("    sdk   Official provider SDK  (recommended)")
-    _echo("    rest  Raw HTTP via httpx")
-    _echo()
-    impl = _prompt("Implementation", choices=_IMPLEMENTATIONS)
-
-    _header("Step 3 of 4  —  Model Family")
-    _echo("  Which model family do you want to use?")
+    _header("Step 1 of 3  —  Provider")
+    _echo("  Which model provider do you want to use?")
     _echo()
     _echo("    anthropic  Claude (Sonnet, Opus, Haiku)")
     _echo("    google     Gemini (Flash, Pro)")
     _echo("    openai     GPT (4o, o1, o3)")
     _echo()
-    model = _prompt("Model", choices=_MODELS)
+    provider = _prompt("Provider", choices=_PROVIDERS)
 
-    _header("Step 4 of 4  —  API Key")
-    _echo(f"  Enter your {model.capitalize()} API key.")
+    _header("Step 2 of 3  —  API Key")
+    _echo(f"  Enter your {provider.capitalize()} API key.")
     _echo()
     api_key = input("  API key > ").strip()
 
@@ -139,12 +123,12 @@ def _setup():
 
     # Create a temporary LLM (no model name yet) purely to fetch the model list.
     try:
-        temp_llm = LlmProviderFactory.create(model, api_key, implementation=impl)
+        temp_llm = LlmProviderFactory.create(provider, api_key)
     except Exception as e:
         _echo(f"\n  Failed to initialise client: {e}")
         raise SystemExit(1)
 
-    _header("Step 5 of 5  —  Model Version")
+    _header("Step 3 of 3  —  Model Version")
     model_name = _pick_model(temp_llm)
 
     _echo()
@@ -152,12 +136,12 @@ def _setup():
     _echo("  Connecting...")
 
     try:
-        llm = LlmProviderFactory.create(model, api_key, model_name, implementation=impl)
+        llm = LlmProviderFactory.create(provider, api_key, model_name)
     except Exception as e:
         _echo(f"\n  Failed to initialise client: {e}")
         raise SystemExit(1)
 
-    _echo(f"  Connected.  [{model.capitalize()} / {model_name}]")
+    _echo(f"  Connected.  [{provider.capitalize()} / {model_name}]")
     _echo(DIVIDER)
 
     return llm, model_name
