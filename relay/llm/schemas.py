@@ -100,9 +100,15 @@ class Usage(BaseModel):
     provider adapter, so callers can rely on the same shape regardless of backend.
     """
 
-    prompt_tokens: int = Field(description="Tokens consumed by the prompt/input")
-    completion_tokens: int = Field(description="Tokens generated in the completion/output")
-    total_tokens: int = Field(description="Total tokens (prompt + completion)")
+    prompt_tokens: int = Field(description="Input tokens (billed at the input rate)")
+    completion_tokens: int = Field(
+        description="Visible output tokens (billed at the output rate); excludes thinking"
+    )
+    total_tokens: int = Field(description="Total tokens (prompt + completion + thinking)")
+    thinking_tokens: int = Field(
+        default=0,
+        description="Reasoning tokens, distinct from completion; billed at the output rate; 0 for non-thinking models",
+    )
 
 class LlmResponse(BaseModel):
     """Response from LLM provider."""

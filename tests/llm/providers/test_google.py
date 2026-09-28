@@ -321,3 +321,33 @@ class TestSdkGoogleListModels:
 
         models = asyncio.run(llm.list_models())
         assert models == ["gemini-2.0-flash"]
+
+
+# Regression: usage parsing must survive thinking models (None counts) and split thinking out.
+from types import SimpleNamespace
+from relay.llm.providers.google import GoogleLlm as _G
+
+
+class TestUsageParsing:
+    def test_thinking_model_none_candidates_is_coalesced_and_split(self):
+        # A thinking model that emitted no visible text: candidates=None, thoughts=50, total=None.
+        um = SimpleNamespace(
+            prompt_token_count=10, candidates_token_count=None,
+            thoughts_token_count=50, total_token_count=None,
+        )
+        u = _G._usage(um)
+        assert u.prompt_tokens == 10
+        assert u.completion_tokens == 0        # visible output only
+        assert u.thinking_tokens == 50         # split out, not folded into completion
+        assert u.total_tokens == 60            # prompt + completion + thinking (derived)
+
+    def test_non_thinking_model_has_zero_thinking(self):
+        um = SimpleNamespace(
+            prompt_token_count=8, candidates_token_count=4, total_token_count=12,
+        )  # no thoughts_token_count attribute at all
+        u = _G._usage(um)
+        assert (u.prompt_tokens, u.completion_tokens, u.thinking_tokens, u.total_tokens) == (8, 4, 0, 12)
+
+    def test_missing_usage_metadata_is_all_zero(self):
+        u = _G._usage(None)
+        assert (u.prompt_tokens, u.completion_tokens, u.thinking_tokens, u.total_tokens) == (0, 0, 0, 0)
